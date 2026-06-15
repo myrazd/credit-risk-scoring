@@ -156,6 +156,15 @@ input_data["HasRealEstateLoan"] = (
 with st.expander("View Model Input"):
     st.dataframe(input_data)
 
+# Add loan amount input
+loan_amount = st.number_input(
+    "Requested Loan Amount",
+    min_value=1000.0,
+    max_value=50000.0,
+    value=10000.0,
+    step=1000.0
+)
+
 # Generate prediction
 if st.button("Generate Credit Risk Assessment"):
 
@@ -176,10 +185,19 @@ if st.button("Generate Credit Risk Assessment"):
     else:
         risk_category = "High Risk"
         loan_decision = "Reject"
+    
+    # Expected loss calculation
+    lgd = 0.60
+
+    expected_loss = (
+        default_probability
+        * loan_amount
+        * lgd
+    )
 
     st.subheader("Credit Risk Assessment Results")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric(
         "Default Probability",
@@ -194,6 +212,16 @@ if st.button("Generate Credit Risk Assessment"):
     col3.metric(
         "Risk Category",
         risk_category
+    )
+
+    col4.metric(
+        "Loan Amount",
+        f"RM{loan_amount:,.0f}"
+    )
+
+    col5.metric(
+        "Expected Loss",
+        f"RM{expected_loss:,.2f}"
     )
 
     st.info(
