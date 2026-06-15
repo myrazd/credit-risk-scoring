@@ -155,3 +155,47 @@ input_data["HasRealEstateLoan"] = (
 # Show model input
 with st.expander("View Model Input"):
     st.dataframe(input_data)
+
+# Generate prediction
+if st.button("Generate Credit Risk Assessment"):
+
+    default_probability = model.predict_proba(
+        input_data
+    )[0, 1]
+
+    credit_score = int(
+        850 - (default_probability * 550)
+    )
+
+    if default_probability < 0.05:
+        risk_category = "Low Risk"
+        loan_decision = "Approve"
+    elif default_probability < 0.15:
+        risk_category = "Medium Risk"
+        loan_decision = "Manual Review"
+    else:
+        risk_category = "High Risk"
+        loan_decision = "Reject"
+
+    st.subheader("Credit Risk Assessment Results")
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric(
+        "Default Probability",
+        f"{default_probability:.2%}"
+    )
+
+    col2.metric(
+        "Credit Score",
+        credit_score
+    )
+
+    col3.metric(
+        "Risk Category",
+        risk_category
+    )
+
+    st.info(
+        f"Recommended Loan Decision: **{loan_decision}**"
+    )
