@@ -117,3 +117,41 @@ with col2:
         value=0,
         step=1
     )
+
+# Create prediction input
+input_data = pd.DataFrame({
+    "RevolvingUtilizationOfUnsecuredLines": [revolving_utilization],
+    "age": [age],
+    "NumberOfTime30-59DaysPastDueNotWorse": [late_30_59],
+    "DebtRatio": [debt_ratio],
+    "MonthlyIncome": [monthly_income],
+    "NumberOfOpenCreditLinesAndLoans": [open_credit_lines],
+    "NumberOfTimes90DaysLate": [late_90],
+    "NumberRealEstateLoansOrLines": [real_estate_loans],
+    "NumberOfTime60-89DaysPastDueNotWorse": [late_60_89],
+    "NumberOfDependents": [dependents],
+    "MissingIncome": [0]
+})
+
+# Add engineered features
+input_data["TotalDelinquencies"] = (
+    input_data["NumberOfTime30-59DaysPastDueNotWorse"]
+    + input_data["NumberOfTime60-89DaysPastDueNotWorse"]
+    + input_data["NumberOfTimes90DaysLate"]
+)
+
+input_data["HasDelinquencyHistory"] = (
+    input_data["TotalDelinquencies"] > 0
+).astype(int)
+
+input_data["HighUtilizationFlag"] = (
+    input_data["RevolvingUtilizationOfUnsecuredLines"] >= 0.80
+).astype(int)
+
+input_data["HasRealEstateLoan"] = (
+    input_data["NumberRealEstateLoansOrLines"] > 0
+).astype(int)
+
+# Show model input
+with st.expander("View Model Input"):
+    st.dataframe(input_data)
