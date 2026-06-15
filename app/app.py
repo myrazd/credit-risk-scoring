@@ -11,6 +11,29 @@ st.set_page_config(
     layout="wide"
 )
 
+# Sidebar information
+st.sidebar.title("About This App")
+
+st.sidebar.markdown(
+    """
+    This dashboard uses a trained XGBoost model to estimate borrower credit risk.
+
+    It provides:
+
+    - Default probability
+    - Credit score estimate
+    - Risk category
+    - Loan approval recommendation
+    - Expected loss estimate
+    """
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption(
+    "For portfolio and educational use only. Not financial advice."
+)
+
 # App title
 st.title("💳 Credit Risk Scoring & Loan Approval System")
 
@@ -31,6 +54,55 @@ def load_model():
 model = load_model()
 
 st.success("Model loaded successfully.")
+
+# Risk category guide
+with st.expander("Risk Category Guide"):
+
+    risk_guide = pd.DataFrame({
+        "Risk Category": [
+            "Low Risk",
+            "Medium Risk",
+            "High Risk"
+        ],
+        "Default Probability": [
+            "< 5%",
+            "5% - 15%",
+            "> 15%"
+        ],
+        "Typical Decision": [
+            "Approve",
+            "Manual Review",
+            "Reject"
+        ]
+    })
+
+    st.dataframe(
+        risk_guide,
+        use_container_width=True
+    )
+
+# Credit score interpretation
+with st.expander("Credit Score Guide"):
+
+    score_guide = pd.DataFrame({
+        "Credit Score Range": [
+            "750 - 850",
+            "650 - 749",
+            "550 - 649",
+            "300 - 549"
+        ],
+        "Interpretation": [
+            "Excellent",
+            "Good",
+            "Fair",
+            "High Risk"
+        ]
+    })
+
+    st.dataframe(
+        score_guide,
+        use_container_width=True
+    )
 
 # Create borrower input form
 st.header("Borrower Information")
@@ -152,6 +224,27 @@ input_data["HasRealEstateLoan"] = (
     input_data["NumberRealEstateLoansOrLines"] > 0
 ).astype(int)
 
+# Reorder columns to match model training data
+model_features = [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents",
+    "MissingIncome",
+    "TotalDelinquencies",
+    "HasDelinquencyHistory",
+    "HighUtilizationFlag",
+    "HasRealEstateLoan"
+]
+
+input_data = input_data[model_features]
+
 # Show model input
 with st.expander("View Model Input"):
     st.dataframe(input_data)
@@ -163,6 +256,15 @@ loan_amount = st.number_input(
     max_value=50000.0,
     value=10000.0,
     step=1000.0
+)
+
+# Add LGD input
+lgd = st.slider(
+    "Loss Given Default (LGD)",
+    min_value=0.10,
+    max_value=1.00,
+    value=0.60,
+    step=0.05
 )
 
 # Generate prediction
@@ -185,9 +287,6 @@ if st.button("Generate Credit Risk Assessment"):
     else:
         risk_category = "High Risk"
         loan_decision = "Reject"
-    
-    # Expected loss calculation
-    lgd = 0.60
 
     expected_loss = (
         default_probability
@@ -227,3 +326,65 @@ if st.button("Generate Credit Risk Assessment"):
     st.info(
         f"Recommended Loan Decision: **{loan_decision}**"
     )
+
+    # Display credit score progress
+    st.progress(
+        credit_score / 850
+    )
+    
+    st.caption(
+        "Credit score is scaled from 300 to 850, where higher scores indicate lower estimated credit risk."
+    )
+
+    # Decision explanation
+    if risk_category == "Low Risk":
+        st.success(
+            """
+            Low-risk borrower profile detected.
+    
+            Recommendation:
+            - Loan can generally be approved.
+            - Expected default risk is relatively low.
+            - Portfolio exposure appears manageable.
+            """
+        )
+    
+    elif risk_category == "Medium Risk":
+        st.warning(
+            """
+            Moderate-risk borrower profile detected.
+    
+            Recommendation:
+            - Manual review is recommended.
+            - Additional verification may be required.
+            - Consider reviewing income stability and repayment history.
+            """
+        )
+    
+    else:
+        st.error(
+            """
+            High-risk borrower profile detected.
+
+            Recommendation:
+            - Loan rejection is recommended.
+            - Default probability is elevated.
+            - Expected portfolio loss may be significant.
+            """
+        )
+
+    # Show risk threshold explanation
+    with st.expander("How the decision is made"):
+        st.markdown(
+            """
+            The recommendation is based on predicted default probability:
+    
+            - **Approve:** Default probability below 5%
+            - **Manual Review:** Default probability between 5% and 15%
+            - **Reject:** Default probability above 15%
+    
+            Expected loss is calculated using:
+    
+            **Expected Loss = Default Probability × Loan Amount × LGD**
+            """
+        )
