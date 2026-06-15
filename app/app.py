@@ -373,6 +373,50 @@ if st.button("Generate Credit Risk Assessment"):
             """
         )
 
+        # Borrower risk factor explanation
+    st.subheader("Key Risk Factors")
+
+    risk_factors = []
+
+    if revolving_utilization >= 0.80:
+        risk_factors.append(
+            "High revolving credit utilization"
+        )
+
+    if late_30_59 > 0:
+        risk_factors.append(
+            "Recent 30-59 days past due history"
+        )
+
+    if late_60_89 > 0:
+        risk_factors.append(
+            "Recent 60-89 days past due history"
+        )
+
+    if late_90 > 0:
+        risk_factors.append(
+            "Severe 90+ days late history"
+        )
+
+    if debt_ratio >= 1.00:
+        risk_factors.append(
+            "Elevated debt ratio"
+        )
+
+    if monthly_income < 3000:
+        risk_factors.append(
+            "Lower monthly income"
+        )
+
+    if len(risk_factors) > 0:
+        for factor in risk_factors:
+            st.write(f"- {factor}")
+    else:
+        st.write(
+            "No major high-risk indicators detected based on the input values."
+        )
+        
+
     # Show risk threshold explanation
     with st.expander("How the decision is made"):
         st.markdown(
@@ -388,3 +432,60 @@ if st.button("Generate Credit Risk Assessment"):
             **Expected Loss = Default Probability × Loan Amount × LGD**
             """
         )
+
+        # Create assessment report
+    assessment_report = pd.DataFrame({
+        "Metric": [
+            "Default Probability",
+            "Credit Score",
+            "Risk Category",
+            "Loan Decision",
+            "Loan Amount",
+            "LGD",
+            "Expected Loss"
+        ],
+        "Value": [
+            f"{default_probability:.2%}",
+            credit_score,
+            risk_category,
+            loan_decision,
+            f"RM{loan_amount:,.0f}",
+            f"{lgd:.0%}",
+            f"RM{expected_loss:,.2f}"
+        ]
+    })
+
+    st.download_button(
+        label="Download Assessment Report",
+        data=assessment_report.to_csv(
+            index=False
+        ),
+        file_name="credit_risk_assessment.csv",
+        mime="text/csv"
+    )
+
+# Project summary
+st.markdown("---")
+
+st.header("Model Overview")
+
+summary_col1, summary_col2, summary_col3 = st.columns(3)
+
+summary_col1.metric(
+    "Final Model",
+    "Feature Engineered XGBoost"
+)
+
+summary_col2.metric(
+    "ROC-AUC",
+    "0.869"
+)
+
+summary_col3.metric(
+    "Training Records",
+    "150,000"
+)
+
+st.caption(
+    "This app is designed for portfolio and educational purposes. It is not intended for real-world lending decisions."
+)
