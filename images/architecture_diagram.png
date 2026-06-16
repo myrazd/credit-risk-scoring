@@ -1,0 +1,16 @@
+User Input
+   ↓
+Streamlit Dashboard
+   ↓
+Feature Engineering Layer
+   ↓
+Trained XGBoost Model
+   ↓
+Prediction Engine
+   ↓
+Credit Risk Outputs
+   ├─ Probability of Default
+   ├─ Credit Score
+   ├─ Risk Category
+   ├─ Loan Decision
+   └─ Expected Loss
