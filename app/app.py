@@ -20,7 +20,7 @@ st.sidebar.markdown(
 
     It provides:
 
-    - Default probability
+    - Probability of Default (PD)
     - Credit score estimate
     - Risk category
     - Loan approval recommendation
@@ -58,8 +58,6 @@ def load_model():
 
 model = load_model()
 
-st.success("Model loaded successfully.")
-
 # Risk category guide
 with st.expander("Risk Category Guide"):
 
@@ -69,7 +67,7 @@ with st.expander("Risk Category Guide"):
             "Medium Risk",
             "High Risk"
         ],
-        "Default Probability": [
+        "Probability of Default (PD)": [
             "< 5%",
             "5% - 15%",
             "> 15%"
@@ -195,6 +193,9 @@ with col2:
         step=1
     )
 
+# Create missing income indicator
+missing_income = int(monthly_income == 0)
+
 # Create prediction input
 input_data = pd.DataFrame({
     "RevolvingUtilizationOfUnsecuredLines": [revolving_utilization],
@@ -207,7 +208,7 @@ input_data = pd.DataFrame({
     "NumberRealEstateLoansOrLines": [real_estate_loans],
     "NumberOfTime60-89DaysPastDueNotWorse": [late_60_89],
     "NumberOfDependents": [dependents],
-    "MissingIncome": [0]
+    "MissingIncome": [missing_income]
 })
 
 # Add engineered features
@@ -279,8 +280,12 @@ if st.button("Generate Credit Risk Assessment"):
         input_data
     )[0, 1]
 
-    credit_score = int(
-        850 - (default_probability * 550)
+    credit_score = max(
+    300,
+    min(
+        850,
+        int(850 - (default_probability * 550))
+    )
     )
 
     if default_probability < 0.05:
@@ -304,7 +309,7 @@ if st.button("Generate Credit Risk Assessment"):
     col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric(
-        "Default Probability",
+        "Probability of Default (PD)",
         f"{default_probability:.2%}"
     )
 
@@ -373,7 +378,7 @@ if st.button("Generate Credit Risk Assessment"):
 
             Recommendation:
             - Loan rejection is recommended.
-            - Default probability is elevated.
+            - Probability of Default (PD) is elevated.
             - Expected portfolio loss may be significant.
             """
         )
@@ -415,7 +420,7 @@ if st.button("Generate Credit Risk Assessment"):
 
     if len(risk_factors) > 0:
         for factor in risk_factors:
-            st.write(f"- {factor}")
+            st.markdown(f"• {factor}")
     else:
         st.write(
             "No major high-risk indicators detected based on the input values."
@@ -423,18 +428,18 @@ if st.button("Generate Credit Risk Assessment"):
         
 
     # Show risk threshold explanation
-    with st.expander("How the decision is made"):
+    with st.expander("Decision Methodology"):
         st.markdown(
             """
-            The recommendation is based on predicted default probability:
+            The recommendation is based on predicted Probability of Default (PD):
     
-            - **Approve:** Default probability below 5%
-            - **Manual Review:** Default probability between 5% and 15%
-            - **Reject:** Default probability above 15%
+            - **Approve:** Probability of Default (PD) below 5%
+            - **Manual Review:** Probability of Default (PD) between 5% and 15%
+            - **Reject:** Probability of Default (PD) above 15%
     
             Expected loss is calculated using:
     
-            **Expected Loss = Default Probability × Loan Amount × LGD**
+            **Expected Loss = Probability of Default (PD) × Loan Amount × LGD**
             """
         )
 
@@ -442,7 +447,7 @@ if st.button("Generate Credit Risk Assessment"):
     # Create assessment report
     assessment_report = pd.DataFrame({
         "Metric": [
-            "Default Probability",
+            "Probability of Default (PD)",
             "Credit Score",
             "Risk Category",
             "Loan Decision",
