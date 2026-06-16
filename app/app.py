@@ -338,9 +338,12 @@ if st.button("Generate Credit Risk Assessment"):
     )
 
     # Display credit score progress
-    st.progress(
-        credit_score / 850
+    score_progress = (
+    (credit_score - 300)
+    / (850 - 300)
     )
+
+    st.progress(score_progress)
     
     st.caption(
         "Credit score is scaled from 300 to 850, where higher scores indicate lower estimated credit risk."
@@ -422,8 +425,8 @@ if st.button("Generate Credit Risk Assessment"):
         for factor in risk_factors:
             st.markdown(f"• {factor}")
     else:
-        st.write(
-            "No major high-risk indicators detected based on the input values."
+        st.success(
+        "No major high-risk indicators were detected based on the provided borrower information."
         )
         
 
