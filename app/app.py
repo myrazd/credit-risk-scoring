@@ -43,6 +43,11 @@ st.markdown(
     """
 )
 
+# Dashboard note
+st.info(
+    "Adjust borrower inputs below to generate a credit risk score, loan decision, and expected loss estimate."
+)
+
 # Load model
 @st.cache_resource
 def load_model():
@@ -373,7 +378,7 @@ if st.button("Generate Credit Risk Assessment"):
             """
         )
 
-        # Borrower risk factor explanation
+    # Borrower risk factor explanation
     st.subheader("Key Risk Factors")
 
     risk_factors = []
@@ -433,7 +438,8 @@ if st.button("Generate Credit Risk Assessment"):
             """
         )
 
-        # Create assessment report
+
+    # Create assessment report
     assessment_report = pd.DataFrame({
         "Metric": [
             "Default Probability",
